@@ -1,6 +1,7 @@
 
 #include <string>
-std::string ddsim_output_file_str = "dch_proton_10GeV.root";
+std::string ddsim_output_file_str = "dch_proton_10GeV.root"; /*"dch_proton_10GeV.root"; "dch_proton_10GeV_limitsON.root"*/
+
 std::string dch_compact_file_str = "./compact/DCH_standalone_o1_v02.xml";
 std::string dch_detector_name_str = "DCH_v2";
 std::string dch_encoding_str =  "system:5,superlayer:5,layer:4,nphi:11,stereosign:-1";
@@ -46,6 +47,7 @@ R__LOAD_LIBRARY(DDRec);
 
 
 TH3D * hXYZ = new TH3D("hXYZ","", 100,-2000, 2000, 100,-2000, 2000, 100,-2000, 2000 );
+TH1D * hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
 
 struct mywire_t
 {
@@ -252,7 +254,9 @@ void read_dch_hits_dd4hep()
             double a_minus_p_dot_n = a_minus_p.Dot( n );
             TVector3 scaled_n = a_minus_p_dot_n * n;
             TVector3 p_to_wire = a_minus_p - scaled_n;
-            std::cout << Form("Distance to the wire: %g", p_to_wire.Mag() ) << std::endl;
+            double distance_hit_wire = p_to_wire.Mag();
+            std::cout << Form("Distance to the wire: %g", distance_hit_wire ) << std::endl;
+            hDpw->Fill(distance_hit_wire);
 
 
            // //  // Draw wire
@@ -264,7 +268,7 @@ void read_dch_hits_dd4hep()
 
 
         }
-        break;
+        // break;
 
     }
 }
