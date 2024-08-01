@@ -53,7 +53,8 @@ struct mywire_t
    double twisted_angle = {0}; //radians
    TVector3 p1;
    TVector3 p2;
-   TVector3 ez;
+   TVector3 wireDirection();
+   TVector3 wirePoint();
    void set(double rz0, int stereosign, double angle);
 };
 
@@ -85,6 +86,18 @@ void mywire_t::set(double rz0, int stereosign, double angle)
 
 
 }
+
+TVector3 mywire_t::wireDirection()
+{
+    return (p2-p1).Unit();
+}
+
+TVector3 mywire_t::wirePoint()
+{
+    return p1;
+}
+
+
 
 
 TPolyLine3D *sw_polyline;
@@ -231,12 +244,23 @@ void read_dch_hits_dd4hep()
 
 
             awire.set( l.radius_sw_z0 , stereosign , phi_z0);
+            TVector3 n = awire.wireDirection();
+            TVector3 a = awire.wirePoint();
+            TVector3 p {hit.position.x()*MM_TO_CM,hit.position.y()*MM_TO_CM,hit.position.z()*MM_TO_CM};
 
-            sw_polyline = new TPolyLine3D(2);
-            sw_polyline->SetPoint(0,awire.p1.x()/dd4hep::mm, awire.p1.y()/dd4hep::mm, awire.p1.z()/dd4hep::mm);
-      	    sw_polyline->SetPoint(1,awire.p2.x()/dd4hep::mm, awire.p2.y()/dd4hep::mm, awire.p2.z()/dd4hep::mm);
-      	    c1->cd();
-      	    sw_polyline->Draw();
+            TVector3 a_minus_p = a - p;
+            double a_minus_p_dot_n = a_minus_p.Dot( n );
+            TVector3 scaled_n = a_minus_p_dot_n * n;
+            TVector3 p_to_wire = a_minus_p - scaled_n;
+            std::cout << Form("Distance to the wire: %g", p_to_wire.Mag() ) << std::endl;
+
+
+           // //  // Draw wire
+           // //  sw_polyline = new TPolyLine3D(2);
+           // //  sw_polyline->SetPoint(0,awire.p1.x()/dd4hep::mm, awire.p1.y()/dd4hep::mm, awire.p1.z()/dd4hep::mm);
+      	    // // sw_polyline->SetPoint(1,awire.p2.x()/dd4hep::mm, awire.p2.y()/dd4hep::mm, awire.p2.z()/dd4hep::mm);
+      	    // // c1->cd();
+      	    // // sw_polyline->Draw();
 
 
         }
