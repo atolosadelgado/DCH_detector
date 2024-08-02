@@ -20,14 +20,13 @@ from Configurables import DCHdigi
 DCHdigi = DCHdigi("DCHdigi")
 DCHdigi.DCH_simhits=["DCHCollection"]
 DCHdigi.DCH_name="DCH_v2"
-DCHdigi.DCH_DigiCollection="DCH_DigiCollection"
 
 DCHdigi.OutputLevel=INFO
 
 mgr = ApplicationMgr(
     TopAlg=[DCHdigi],
     EvtSel="NONE",
-    EvtMax=-1,
+    EvtMax=0,
     ExtSvc=[geoservice,EventDataSvc("EventDataSvc")],
     OutputLevel=INFO,
 )

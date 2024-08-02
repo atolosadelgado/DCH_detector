@@ -18,7 +18,7 @@ DCHdigi::DCHdigi(const std::string& name, ISvcLocator* svcLoc)
                             KeyValues("HeaderName", {"EventHeader"}),
                         },
                         {
-                            KeyValues("DCH_DigiCollection", {""})
+                            KeyValues("DCH_DigiCollection", {"DCH_DigiCollection"})
                         }
                        )
 {
