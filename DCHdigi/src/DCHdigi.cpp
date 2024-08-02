@@ -23,6 +23,7 @@ DCHdigi::DCHdigi(const std::string& name, ISvcLocator* svcLoc)
                        )
 {
   m_geoSvc = serviceLocator()->service(m_geoSvcName);
+  m_uidSvc = serviceLocator()->service(m_uidSvcName);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -112,11 +113,18 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 
       // std::cout << hit_position.Mag() << std::endl;
 
-      TVector3 p_to_wire = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
-      double distance_hit_wire = p_to_wire.Mag();
+      TVector3 hit_to_wire_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
+      double distance_hit_wire = hit_to_wire_vector.Mag();
       if( m_create_debug_histos.value() )
           hDpw->Fill(distance_hit_wire);
       // std::cout << distance_hit_wire << std::endl;
+
+      TVector3 hit_projection_on_the_wire = hit_position + hit_to_wire_vector;
+      //-- temporal debug...
+      TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
+
+      std::cout << dummy_vector.Mag() << std::endl;
+
 
 
       TVector3 wire_direction_ez = this->Calculate_wire_vector_ez(ilayer, nphi);
@@ -124,12 +132,14 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 		std::int32_t type = 0;
 		std::int32_t quality = 0;
 		float eDepError =0;
-        edm4hep::Vector3d positionSW = {0.,0.,0.};
-        // position units back to mm
+        // length units back to mm
+        edm4hep::Vector3d positionSW = {hit_projection_on_the_wire.x()/MM_TO_CM,
+                                        hit_projection_on_the_wire.y()/MM_TO_CM,
+                                        hit_projection_on_the_wire.z()/MM_TO_CM };
         edm4hep::Vector3d directionSW = {wire_direction_ez.x()/MM_TO_CM,
-                                                    wire_direction_ez.y()/MM_TO_CM,
-                                                    wire_direction_ez.z()/MM_TO_CM };
-        float distanceToWire = distance_hit_wire;
+                                         wire_direction_ez.y()/MM_TO_CM,
+                                         wire_direction_ez.z()/MM_TO_CM };
+        float distanceToWire = hit_to_wire_vector.Mag();
         std::uint32_t clusterCount = 0;
         std::uint32_t clusterSize = 0;
 
@@ -274,6 +284,6 @@ TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TV
     TVector3 a_minus_p = a - hit_position;
     double a_minus_p_dot_n = a_minus_p.Dot( n );
     TVector3 scaled_n = a_minus_p_dot_n * n;
-    //p_to_wire_vector = a_minus_p - scaled_n;
+    //hit_to_wire_vector = a_minus_p - scaled_n;
     return (a_minus_p - scaled_n);
 }

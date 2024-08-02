@@ -5,7 +5,7 @@
 # k4run runDCHdigi.py
 
 from Gaudi.Configuration import INFO,DEBUG
-from Configurables import EventDataSvc
+from Configurables import EventDataSvc, UniqueIDGenSvc
 from k4FWCore import ApplicationMgr, IOSvc
 
 svc = IOSvc("IOSvc")
@@ -27,6 +27,6 @@ mgr = ApplicationMgr(
     TopAlg=[DCHdigi],
     EvtSel="NONE",
     EvtMax=-1,
-    ExtSvc=[geoservice,EventDataSvc("EventDataSvc")],
+    ExtSvc=[geoservice,EventDataSvc("EventDataSvc"),UniqueIDGenSvc("uidSvc")],
     OutputLevel=INFO,
 )
