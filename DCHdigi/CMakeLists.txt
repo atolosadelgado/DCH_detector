@@ -28,7 +28,7 @@ install(FILES
 
 install(FILES
   dataFormatExtension/driftChamberHit.yaml
-  DESTINATION "${CMAKE_INSTALL_LIBDIR}/extension" COMPONENT dev)
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/extension" COMPONENT dev)
 
 install(FILES
   "${PROJECT_BINARY_DIR}/libextensionDict_rdict.pcm"
