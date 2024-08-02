@@ -77,6 +77,10 @@ private:
   /// Detector name
   Gaudi::Property<std::string> m_DCH_name{this, "DCH_name", "DCH_v2", "Name of the Drift Chamber detector"};
 
+  /// Flag to create output file with debug histgrams
+  Gaudi::Property<bool> m_create_debug_histos{this, "create_debug_histograms", true, "Create output file with histograms for debugging"};
+
+
   /// Pointer to the geometry service
   SmartIF<IGeoSvc>                        m_geoSvc;
 

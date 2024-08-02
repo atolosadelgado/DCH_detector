@@ -63,10 +63,11 @@ StatusCode DCHdigi::initialize() {
 	std::stringstream ss;
 	PrintConfiguration(ss);
 	info() << ss.str().c_str() <<endmsg;
-
-    hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
-    hDpw->SetDirectory(0);
-
+    if( m_create_debug_histos.value() )
+    {
+        hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
+        hDpw->SetDirectory(0);
+    }
 	return StatusCode::SUCCESS;
 }
 
@@ -99,8 +100,9 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 
       TVector3 p_to_wire = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
       double distance_hit_wire = p_to_wire.Mag();
-      hDpw->Fill(distance_hit_wire);
-      std::cout << distance_hit_wire << std::endl;
+      if( m_create_debug_histos.value() )
+          hDpw->Fill(distance_hit_wire);
+      // std::cout << distance_hit_wire << std::endl;
 
 
 
@@ -120,9 +122,12 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 ///////////////////////////////////////////////////////////////////////////////////////
 StatusCode DCHdigi::finalize()
 {
-    std::unique_ptr<TFile> ofile{TFile::Open ( "dch_digi_alg_debug.root", "update" ) };
-    ofile->cd();
-    hDpw->Write();
+    if( m_create_debug_histos.value() )
+    {
+        std::unique_ptr<TFile> ofile{TFile::Open ( "dch_digi_alg_debug.root", "update" ) };
+        ofile->cd();
+        hDpw->Write();
+    }
 
     return StatusCode::SUCCESS;
 }
