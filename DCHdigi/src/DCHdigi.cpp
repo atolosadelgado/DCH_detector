@@ -102,10 +102,10 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 
     //loop over hit collection
 	for (const auto& input_sim_hit : input_sim_hits) {
-      dd4hep::DDSegmentation::CellID id = input_sim_hit.getCellID();
-      // std::cout << "New DCH hit with cell ID: " << id << std::endl;
-      int ilayer = this->CalculateLayerFromCellID(id);
-      int nphi   = this->CalculateNphiFromCellID(id);
+      dd4hep::DDSegmentation::CellID cellid = input_sim_hit.getCellID();
+      // std::cout << "New DCH hit with cell ID: " << cellid  << std::endl;
+      int ilayer = this->CalculateLayerFromCellID(cellid );
+      int nphi   = this->CalculateNphiFromCellID(cellid );
       TVector3 hit_position { input_sim_hit.getPosition()[0]*MM_TO_CM ,
                               input_sim_hit.getPosition()[1]*MM_TO_CM ,
                               input_sim_hit.getPosition()[2]*MM_TO_CM };
@@ -119,11 +119,33 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
       // std::cout << distance_hit_wire << std::endl;
 
 
+      TVector3 wire_direction_ez = this->Calculate_wire_vector_ez(ilayer, nphi);
 
+		std::int32_t type = 0;
+		std::int32_t quality = 0;
+		float eDepError =0;
+        edm4hep::Vector3d positionSW = {0.,0.,0.};
+        // position units back to mm
+        edm4hep::Vector3d directionSW = {wire_direction_ez.x()/MM_TO_CM,
+                                                    wire_direction_ez.y()/MM_TO_CM,
+                                                    wire_direction_ez.z()/MM_TO_CM };
+        float distanceToWire = distance_hit_wire;
+        std::uint32_t clusterCount = 0;
+        std::uint32_t clusterSize = 0;
 
-      // emplace output objects
-      // output_digi_hits.create(....);
-
+        auto & i = input_sim_hit;
+		output_digi_hits.create( i.getCellID(),
+								 type,
+								 quality,
+								 i.getTime(),
+								 i.getEDep(),
+								 eDepError,
+								 positionSW,
+								 directionSW,
+								 distanceToWire,
+								 clusterCount,
+								 clusterSize
+								 );
 	}// end loop over hit collection
 
 
