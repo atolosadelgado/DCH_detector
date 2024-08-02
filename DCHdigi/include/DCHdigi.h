@@ -42,6 +42,8 @@
 
 #include "DDRec/DCH_info.h"
 
+#include "TVector3.h"
+
 
 using colltype_in  = edm4hep::SimTrackerHitCollection;
 using colltype_out = edm4hep::ParticleIDCollection;
@@ -78,6 +80,8 @@ private:
 
   /// Send error message to logger and throw exception
   void ThrowException(std::string s) const;
+
+  TVector3 Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & p) const;
 
   /// Declare here variables to be initialized at when creating the algorithm and then used within the event loop
 
