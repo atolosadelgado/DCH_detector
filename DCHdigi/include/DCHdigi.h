@@ -7,6 +7,7 @@
  *
  * <h4>Input collections and prerequisites</h4>
  * Processor requires a collection of SimTrackerHits <br>
+ * This code uses DD4hep length natural unit (cm), but EDM4hep data is (usually) in mm. Please be careful with units.  <br>
  * <h4>Output</h4>
  * Processor produces collection of ParticleID<br>
  * @param DCH_simhits The name of input collection, type edm4hep::SimTrackerHitCollection <br>
@@ -81,7 +82,7 @@ private:
   /// Send error message to logger and throw exception
   void ThrowException(std::string s) const;
 
-  TVector3 Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & p) const;
+  TVector3 Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & hit_position /*in cm*/) const;
 
   /// Declare here variables to be initialized at when creating the algorithm and then used within the event loop
 

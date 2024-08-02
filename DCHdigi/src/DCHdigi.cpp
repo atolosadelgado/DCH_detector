@@ -128,17 +128,27 @@ void DCHdigi::PrintConfiguration(std::ostream& io)
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////  Calculate vector from hit position to wire   /////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
-TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & p) const
+TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & hit_position /*in cm*/) const
 {
     auto & l = this->dch_data->database.at(ilayer);
 
+    // See original paper Hoshina et al, Computer Physics Communications 153 (2003) 3
+    // eq. 2.9, for the definition of ez, vector along the wire
+
+    // initialize some variables
     int stereosign = l.StereoSign();
     double rz0 = l.radius_sw_z0;
     double dphi = dch_data->twist_angle;
+    // kappa is the same as in eq. 2.9
     double kappa = (1./dch_data->Lhalf)*tan(dphi/2);
+    // calculate phi rotation of whole twisted tube, ie, rotation at z=0
     int ncells = l.nwires/2;
     double phistep = TMath::TwoPi()/ncells;
     double phi_z0 = (nphi + 0.25*(l.layer%2))*phistep;
+
+
+    //--- calculating wire position
+    // the points p1 and p2 correspond to the ends of the wire
 
     // point 1
     // double x1 = rz0; // m
@@ -160,13 +170,17 @@ TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TV
 
     p1.RotateZ(phi_z0);
     p2.RotateZ(phi_z0);
+
+    //--- end calculating wire position
+
     // Solution distance from a point to a line given here:
     // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
     TVector3 n = (p2-p1).Unit();
     TVector3 a = p1;
+    // Remember using cm as natural units of DD4hep consistently!
     // TVector3 p {hit.position.x()*MM_TO_CM,hit.position.y()*MM_TO_CM,hit.position.z()*MM_TO_CM};
 
-    TVector3 a_minus_p = a - p;
+    TVector3 a_minus_p = a - hit_position;
     double a_minus_p_dot_n = a_minus_p.Dot( n );
     TVector3 scaled_n = a_minus_p_dot_n * n;
     //p_to_wire_vector = a_minus_p - scaled_n;
