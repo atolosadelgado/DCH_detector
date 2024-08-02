@@ -30,6 +30,11 @@ DCHdigi::DCHdigi(const std::string& name, ISvcLocator* svcLoc)
 ///////////////////////////////////////////////////////////////////////////////////////
 StatusCode DCHdigi::initialize() {
 
+	if (!m_uidSvc)
+		ThrowException( "Unable to get UniqueIDGenSvc" );
+
+	m_gauss_z_cm  = std::normal_distribution<double>(0., m_z_resolution.value()*MM_TO_CM );
+	m_gauss_xy_cm = std::normal_distribution<double>(0., m_xy_resolution.value()*MM_TO_CM);
 
 	//-----------------
 	// Retrieve the subdetector
@@ -78,9 +83,18 @@ StatusCode DCHdigi::initialize() {
 ///////////////////////////////////////////////////////////////////////////////////////
 std::tuple<colltype_out>
 DCHdigi::operator()(const colltype_in& input_sim_hits,
-                         const edm4hep::EventHeaderCollection&  /*headers*/) const {
+                         const edm4hep::EventHeaderCollection&  headers) const {
 
 
+	{
+		// initialize seed for random engine
+		uint32_t evt_n = headers[0].getEventNumber();
+		uint32_t run_n = headers[0].getRunNumber();
+		size_t seed = m_uidSvc->getUniqueID(evt_n, run_n, this->name() );
+		m_engine.seed(seed);
+		// test random engine...
+		m_engine.discard(10);
+	}
 	debug() << "Input Sim Hit collection size: " << input_sim_hits.size() << endmsg;
 
 	// Create the collections we are going to return

@@ -44,6 +44,7 @@
 #include "DDSegmentation/BitFieldCoder.h"
 
 #include <string>
+#include <random>
 
 #include "DDRec/DCH_info.h"
 
@@ -51,6 +52,7 @@
 #include "TFile.h"
 #include "TH1D.h"
 
+/// constant to convert from mm (EDM4hep) to DD4hep (cm)
 constexpr double MM_TO_CM = 0.1;
 
 using colltype_in  = edm4hep::SimTrackerHitCollection;
@@ -71,15 +73,15 @@ struct DCHdigi final
 
 private:
 
+
+  //------------------------------------------------------------------
+  //          machinery for geometry
+
   /// Geometry service name
   Gaudi::Property<std::string> m_geoSvcName{this, "GeoSvcName", "GeoSvc", "The name of the GeoSvc instance"};
 
   /// Detector name
   Gaudi::Property<std::string> m_DCH_name{this, "DCH_name", "DCH_v2", "Name of the Drift Chamber detector"};
-
-  /// Flag to create output file with debug histgrams
-  Gaudi::Property<bool> m_create_debug_histos{this, "create_debug_histograms", true, "Create output file with histograms for debugging"};
-
 
   /// Pointer to the geometry service
   SmartIF<IGeoSvc>                        m_geoSvc;
@@ -87,10 +89,36 @@ private:
   /// Decoder for the cellID
   dd4hep::DDSegmentation::BitFieldCoder* m_decoder;
 
+  /// Pointer to drift chamber data extension
+  dd4hep::rec::DCH_info * dch_data = {nullptr};
+
+  //------------------------------------------------------------------
+  //          machinery for smearing the position
+
+  /// along the sense wire position resolution in mm
+  Gaudi::Property<float> m_z_resolution{this, "zResolution", 1.0,
+                               "Spatial resolution in the z direction (from reading out the wires at both sides) [mm]"};
+  /// xy resolution in mm
+  Gaudi::Property<float> m_xy_resolution{this, "xyResolution", 0.1, "Spatial resolution in the xy direction [mm]"};
+
+  /// create seed using the uid
+  SmartIF<IUniqueIDGenSvc>                   m_uidSvc;
+  /// use thread local engine from C++ standard
+  inline static thread_local std::mt19937_64 m_engine;
+
+  // Gaussian random number generator used for the smearing of the z position, in cm!
+  std::normal_distribution<double> m_gauss_z_cm;
+  // Gaussian random number generator used for the smearing of the xy position, in cm!
+  std::normal_distribution<double> m_gauss_xy_cm;
+
+
+  //------------------------------------------------------------------
+  //        ancillary functions
+
   /// Print algorithm configuration
   void PrintConfiguration(std::ostream& io);
 
-  /// Send error message to logger and throw exception
+  /// Send error message to logger and then throw exception
   void ThrowException(std::string s) const;
 
   int CalculateLayerFromCellID(dd4hep::DDSegmentation::CellID id) const {
@@ -108,11 +136,12 @@ private:
   TVector3 Calculate_wire_z0_point        (int ilayer, int nphi) const;
   double   Calculate_wire_phi_z0          (int ilayer, int nphi) const;
 
-  /// Declare here variables to be initialized at when creating the algorithm and then used within the event loop
+  //------------------------------------------------------------------
+  //        debug information
+  /// Flag to create output file with debug histgrams
+  Gaudi::Property<bool> m_create_debug_histos{this, "create_debug_histograms", true, "Create output file with histograms for debugging"};
 
-  /// Pointer to drift chamber data extension
-  dd4hep::rec::DCH_info * dch_data = {nullptr};
-
+  /// histogram to store distance from hit position to the wire
   TH1D * hDpw;
 
 
