@@ -26,7 +26,7 @@ DCHdigi.OutputLevel=INFO
 mgr = ApplicationMgr(
     TopAlg=[DCHdigi],
     EvtSel="NONE",
-    EvtMax=0,
+    EvtMax=-1,
     ExtSvc=[geoservice,EventDataSvc("EventDataSvc")],
     OutputLevel=INFO,
 )

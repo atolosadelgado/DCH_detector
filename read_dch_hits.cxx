@@ -240,7 +240,7 @@ void read_dch_hits_dd4hep()
             auto & hit = *hit_ptr;
 
             hXYZ->Fill(hit.position.x(), hit.position.y(), hit.position.z());
-            // std::cout << Form("%g\t%g\t%g",hit.position.x(), hit.position.y(), hit.position.z() ) << std::endl;
+            std::cout << Form("%g\t%g\t%g",hit.position.x()*MM_TO_CM, hit.position.y()*MM_TO_CM, hit.position.z()*MM_TO_CM ) << std::endl;
             double r = sqrt( pow(hit.position.x(),2) + pow(hit.position.y(), 2) )*MM_TO_CM;
 
             // lets calcualte the radius of the corresponding ilayer

@@ -64,6 +64,9 @@ StatusCode DCHdigi::initialize() {
 	PrintConfiguration(ss);
 	info() << ss.str().c_str() <<endmsg;
 
+    hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
+    hDpw->SetDirectory(0);
+
 	return StatusCode::SUCCESS;
 }
 
@@ -82,17 +85,30 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 	// Create the collections we are going to return
 	colltype_out output_digi_hits;
 
- // // //    //loop over hit collection
-	// // // for (const auto& input_sim_hit : input_sim_hits) {
- // // //      dd4hep::DDSegmentation::CellID id = input_sim_hit.getCellID();
- // // //      std::cout << "New ARC hit with cell ID: " << id << std::endl;
- // // //
- // // //
- // // //
- // // //      // emplace output objects
- // // //      // output_digi_hits.create(....);
- // // //
-	// // // }// end loop over hit collection
+    //loop over hit collection
+	for (const auto& input_sim_hit : input_sim_hits) {
+      dd4hep::DDSegmentation::CellID id = input_sim_hit.getCellID();
+      // std::cout << "New DCH hit with cell ID: " << id << std::endl;
+      int ilayer = this->CalculateLayerFromCellID(id);
+      int nphi   = this->CalculateNphiFromCellID(id);
+      TVector3 hit_position { input_sim_hit.getPosition()[0]*MM_TO_CM ,
+                              input_sim_hit.getPosition()[1]*MM_TO_CM ,
+                              input_sim_hit.getPosition()[2]*MM_TO_CM };
+
+      // std::cout << hit_position.Mag() << std::endl;
+
+      TVector3 p_to_wire = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
+      double distance_hit_wire = p_to_wire.Mag();
+      hDpw->Fill(distance_hit_wire);
+      std::cout << distance_hit_wire << std::endl;
+
+
+
+
+      // emplace output objects
+      // output_digi_hits.create(....);
+
+	}// end loop over hit collection
 
 
 	/////////////////////////////////////////////////////////////////
@@ -102,7 +118,14 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////       finalize       //////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
-StatusCode DCHdigi::finalize() { return StatusCode::SUCCESS; }
+StatusCode DCHdigi::finalize()
+{
+    std::unique_ptr<TFile> ofile{TFile::Open ( "dch_digi_alg_debug.root", "update" ) };
+    ofile->cd();
+    hDpw->Write();
+
+    return StatusCode::SUCCESS;
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////       ThrowException       ////////////////////////////////////
@@ -126,9 +149,9 @@ void DCHdigi::PrintConfiguration(std::ostream& io)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////  Calculate vector from hit position to wire   /////////////////
+/////       Ancillary functions for calculating the distance to the wire       ////////
 ///////////////////////////////////////////////////////////////////////////////////////
-TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & hit_position /*in cm*/) const
+TVector3 DCHdigi::Calculate_wire_vector_ez(int ilayer, int nphi) const
 {
     auto & l = this->dch_data->database.at(ilayer);
 
@@ -141,11 +164,6 @@ TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TV
     double dphi = dch_data->twist_angle;
     // kappa is the same as in eq. 2.9
     double kappa = (1./dch_data->Lhalf)*tan(dphi/2);
-    // calculate phi rotation of whole twisted tube, ie, rotation at z=0
-    int ncells = l.nwires/2;
-    double phistep = TMath::TwoPi()/ncells;
-    double phi_z0 = (nphi + 0.25*(l.layer%2))*phistep;
-
 
     //--- calculating wire position
     // the points p1 and p2 correspond to the ends of the wire
@@ -168,17 +186,49 @@ TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TV
 
     TVector3 p2 (x2,y2,z2);
 
+    // calculate phi rotation of whole twisted tube, ie, rotation at z=0
+    double phi_z0 = Calculate_wire_phi_z0(ilayer,nphi);
     p1.RotateZ(phi_z0);
     p2.RotateZ(phi_z0);
 
     //--- end calculating wire position
 
+    return (p2-p1).Unit();
+
+}
+
+TVector3 DCHdigi::Calculate_wire_z0_point(int ilayer, int nphi) const
+{
+    auto & l = this->dch_data->database.at(ilayer);
+    double rz0 = l.radius_sw_z0;
+    TVector3 p1 (rz0,0,0);
+    double phi_z0 = Calculate_wire_phi_z0(ilayer,nphi);
+    p1.RotateZ(phi_z0);
+    return p1;
+}
+
+// calculate phi rotation of whole twisted tube, ie, rotation at z=0
+double DCHdigi::Calculate_wire_phi_z0(int ilayer, int nphi) const
+{
+    auto & l = this->dch_data->database.at(ilayer);
+    int ncells = l.nwires/2;
+    double phistep = TMath::TwoPi()/ncells;
+    double phi_z0 = (nphi + 0.25*(l.layer%2))*phistep;
+    return phi_z0;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////  Calculate vector from hit position to wire   /////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & hit_position /*in cm*/) const
+{
     // Solution distance from a point to a line given here:
     // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
-    TVector3 n = (p2-p1).Unit();
-    TVector3 a = p1;
+    TVector3 n = this->Calculate_wire_vector_ez(ilayer, nphi);
+    TVector3 a = this->Calculate_wire_z0_point (ilayer, nphi);
     // Remember using cm as natural units of DD4hep consistently!
-    // TVector3 p {hit.position.x()*MM_TO_CM,hit.position.y()*MM_TO_CM,hit.position.z()*MM_TO_CM};
+    // TVector3 p {hit_position.x()*MM_TO_CM,hit_position.y()*MM_TO_CM,hit_position.z()*MM_TO_CM};
 
     TVector3 a_minus_p = a - hit_position;
     double a_minus_p_dot_n = a_minus_p.Dot( n );

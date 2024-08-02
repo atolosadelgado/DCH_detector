@@ -28,8 +28,12 @@
 
 // EDM4HEP
 #include "edm4hep/SimTrackerHitCollection.h"
-#include "edm4hep/ParticleIDCollection.h"
+#include "edm4hep/ParticleIDData.h"
 #include "edm4hep/EventHeaderCollection.h"
+
+// EDM4HEP extension
+#include "extension/DriftChamberDigiV2Collection.h"
+
 
 #include "k4FWCore/Transformer.h"
 #include "k4Interface/IGeoSvc.h"
@@ -44,10 +48,13 @@
 #include "DDRec/DCH_info.h"
 
 #include "TVector3.h"
+#include "TFile.h"
+#include "TH1D.h"
 
+constexpr double MM_TO_CM = 0.1;
 
 using colltype_in  = edm4hep::SimTrackerHitCollection;
-using colltype_out = edm4hep::ParticleIDCollection;
+using colltype_out = extension::DriftChamberDigiV2Collection;
 
 struct DCHdigi final
     : k4FWCore::MultiTransformer<
@@ -82,12 +89,27 @@ private:
   /// Send error message to logger and throw exception
   void ThrowException(std::string s) const;
 
+  int CalculateLayerFromCellID(dd4hep::DDSegmentation::CellID id) const {
+    return m_decoder->get ( id,"layer" ) + dch_data->nlayersPerSuperlayer*m_decoder->get ( id,"superlayer" ) + 1;
+  }
+
+  int CalculateNphiFromCellID(dd4hep::DDSegmentation::CellID id) const {
+    return m_decoder->get ( id,"nphi" );
+  }
+
+  // the following functions should be upstreamed to the data extension at DD4hep
+  // to avoid code duplication and keep it centralized
   TVector3 Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & hit_position /*in cm*/) const;
+  TVector3 Calculate_wire_vector_ez       (int ilayer, int nphi) const;
+  TVector3 Calculate_wire_z0_point        (int ilayer, int nphi) const;
+  double   Calculate_wire_phi_z0          (int ilayer, int nphi) const;
 
   /// Declare here variables to be initialized at when creating the algorithm and then used within the event loop
 
   /// Pointer to drift chamber data extension
   dd4hep::rec::DCH_info * dch_data = {nullptr};
+
+  TH1D * hDpw;
 
 
 };
