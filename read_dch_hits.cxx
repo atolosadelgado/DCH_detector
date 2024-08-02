@@ -51,6 +51,53 @@ R__LOAD_LIBRARY(DDRec);
 
 TH3D * hXYZ = new TH3D("hXYZ","", 100,-2000, 2000, 100,-2000, 2000, 100,-2000, 2000 );
 TH1D * hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
+TH1D * hDpw2 = new TH1D("hDpw2", "Distance hit to the wire, in cm", 100,0,1);
+
+using dd4hep::rec::DCH_info;
+int DistanceFromPointPToCentralSWireOfDCHcell(int ilayer, int nphi, DCH_info * dch_data, const TVector3 & p, TVector3 & p_to_wire_vector)
+{
+    auto & l = dch_data->database.at(ilayer);
+
+    int stereosign = l.StereoSign();
+    double rz0 = l.radius_sw_z0;
+    double dphi = dch_data->twist_angle;
+    double kappa = (1./dch_data->Lhalf)*tan(dphi/2);
+    int ncells = l.nwires/2;
+    double phistep = TMath::TwoPi()/ncells;
+    double phi_z0 = (nphi + 0.25*(l.layer%2))*phistep;
+
+    // point 1
+    // double x1 = rz0; // m
+    // double y1 = 0.; // m
+    // double z1 = 0.; // m
+    double x1 = rz0; // m
+    double y1 = -stereosign*rz0*kappa*dch_data->Lhalf; // m
+    double z1 = -dch_data->Lhalf; // m
+
+    TVector3 p1 (x1,y1,z1);
+
+
+    // point 2
+    double x2 = rz0; // m
+    double y2 = stereosign*rz0*kappa*dch_data->Lhalf; // m
+    double z2 = dch_data->Lhalf; // m
+
+    TVector3 p2 (x2,y2,z2);
+
+    p1.RotateZ(phi_z0);
+    p2.RotateZ(phi_z0);
+    // Solution distance from a point to a line given here:
+    // https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Vector_formulation
+    TVector3 n = (p2-p1).Unit();
+    TVector3 a = p1;
+    // TVector3 p {hit.position.x()*MM_TO_CM,hit.position.y()*MM_TO_CM,hit.position.z()*MM_TO_CM};
+
+    TVector3 a_minus_p = a - p;
+    double a_minus_p_dot_n = a_minus_p.Dot( n );
+    TVector3 scaled_n = a_minus_p_dot_n * n;
+    p_to_wire_vector = a_minus_p - scaled_n;
+    return 0;
+}
 
 struct mywire_t
 {
@@ -246,6 +293,11 @@ void read_dch_hits_dd4hep()
             double distance_hit_wire = p_to_wire.Mag();
             std::cout << Form("Distance to the wire: %g", distance_hit_wire ) << std::endl;
             hDpw->Fill(distance_hit_wire);
+
+            TVector3 rvector;
+            DistanceFromPointPToCentralSWireOfDCHcell(ilayer, nphi, dch_data,p,rvector);
+            hDpw2->Fill(rvector.Mag());
+
 
             if( draw_wires )
             {
