@@ -1,4 +1,4 @@
-build
-install
+*build
+*install
 *.root
 *.kdev4
