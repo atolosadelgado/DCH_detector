@@ -136,6 +136,16 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         //       smear position perpendicular to the wire
         double smearing_xy = m_gauss_xy_cm( m_engine );
         if( m_create_debug_histos.value() ) hSxy->Fill( smearing_xy );
+        float distanceToWire_real = hit_to_wire_vector.Mag();
+
+        // protect against negative values
+        float distanceToWire_smeared = std::max(0.0, distanceToWire_real +smearing_xy );
+
+        double phi_lateral_displacement = this->Calculate_phi_rot_equivalent_to_hit_to_wire_distance(ilayer,  distanceToWire_smeared );
+        TVector3 left_hit_position  = hit_projection_on_the_wire;
+        TVector3 right_hit_position = hit_projection_on_the_wire;
+        left_hit_position.RotateZ( -phi_lateral_displacement );
+        right_hit_position.RotateZ( phi_lateral_displacement );
 
         std::int32_t type = 0;
         std::int32_t quality = 0;
@@ -143,8 +153,8 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         // length units back to mm
         auto positionSW  = Convert_TVector3_to_EDM4hepVector(hit_projection_on_the_wire, 1./MM_TO_CM );
         auto directionSW = Convert_TVector3_to_EDM4hepVector(wire_direction_ez,          1./MM_TO_CM );
+        float distanceToWire = distanceToWire_smeared/MM_TO_CM;
 
-        float distanceToWire = hit_to_wire_vector.Mag()/MM_TO_CM;
         std::uint32_t clusterCount = 0;
         std::uint32_t clusterSize = 0;
 
@@ -220,6 +230,16 @@ void DCHdigi::PrepareRandomEngine(const edm4hep::EventHeaderCollection&  headers
 ///////////////////////////////////////////////////////////////////////////////////////
 /////       Ancillary functions for calculating the distance to the wire       ////////
 ///////////////////////////////////////////////////////////////////////////////////////
+
+double DCHdigi::Calculate_phi_rot_equivalent_to_hit_to_wire_distance(int ilayer, double hit_to_wire_distance) const
+{
+    auto & l = this->dch_data->database.at(ilayer);
+    double rz0 = l.radius_sw_z0;
+    return 2*atan( (hit_to_wire_distance/2.)/rz0 );
+}
+
+
+
 TVector3 DCHdigi::Calculate_wire_vector_ez(int ilayer, int nphi) const
 {
     auto & l = this->dch_data->database.at(ilayer);
