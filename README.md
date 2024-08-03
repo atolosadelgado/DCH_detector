@@ -60,3 +60,7 @@ ddsim --steeringFile steering.py --outputFile 'dch_proton_10GeV.root' -N 10 --ru
 wget https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/IDEA/DataAlgFORGEANT.root
 k4run DCHdigi/test/runDCHdigi.py
 ```
+
+## Useful links:
+
+* FCC full sim meeting, presentation about the geometry of the drift chamber: https://indico.cern.ch/event/1402578/#33-new-drift-chamber-implement
