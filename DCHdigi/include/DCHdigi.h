@@ -145,6 +145,9 @@ private:
   /// histogram to store distance from hit position to the wire
   TH1D * hDpw;
 
+  /// histogram to store distance from hit projection to the wire (should be zero)
+  TH1D * hDww;
+
 
 };
 

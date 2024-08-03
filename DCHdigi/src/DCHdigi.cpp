@@ -73,6 +73,8 @@ StatusCode DCHdigi::initialize() {
     {
         hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
         hDpw->SetDirectory(0);
+        hDww = new TH1D("hDww", "Distance hit projection to the wire, in cm. Should be zero", 100,0,1);
+        hDww->SetDirectory(0);
     }
 	return StatusCode::SUCCESS;
 }
@@ -114,48 +116,46 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
       // std::cout << hit_position.Mag() << std::endl;
 
       TVector3 hit_to_wire_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
-      double distance_hit_wire = hit_to_wire_vector.Mag();
-      if( m_create_debug_histos.value() )
-          hDpw->Fill(distance_hit_wire);
-      // std::cout << distance_hit_wire << std::endl;
-
       TVector3 hit_projection_on_the_wire = hit_position + hit_to_wire_vector;
-      //-- temporal debug...
-      TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
 
-      std::cout << dummy_vector.Mag() << std::endl;
-
-
+      if( m_create_debug_histos.value() )
+      {
+          double distance_hit_wire = hit_to_wire_vector.Mag();
+          hDpw->Fill(distance_hit_wire);
+          // the distance from the hit projection and the wire should be zero
+          TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
+          hDww->Fill( dummy_vector.Mag() );
+      }
 
       TVector3 wire_direction_ez = this->Calculate_wire_vector_ez(ilayer, nphi);
 
-		std::int32_t type = 0;
-		std::int32_t quality = 0;
-		float eDepError =0;
+        std::int32_t type = 0;
+        std::int32_t quality = 0;
+        float eDepError =0;
         // length units back to mm
         edm4hep::Vector3d positionSW = {hit_projection_on_the_wire.x()/MM_TO_CM,
                                         hit_projection_on_the_wire.y()/MM_TO_CM,
                                         hit_projection_on_the_wire.z()/MM_TO_CM };
         edm4hep::Vector3d directionSW = {wire_direction_ez.x()/MM_TO_CM,
-                                         wire_direction_ez.y()/MM_TO_CM,
-                                         wire_direction_ez.z()/MM_TO_CM };
+                                            wire_direction_ez.y()/MM_TO_CM,
+                                            wire_direction_ez.z()/MM_TO_CM };
         float distanceToWire = hit_to_wire_vector.Mag();
         std::uint32_t clusterCount = 0;
         std::uint32_t clusterSize = 0;
 
         auto & i = input_sim_hit;
-		output_digi_hits.create( i.getCellID(),
-								 type,
-								 quality,
-								 i.getTime(),
-								 i.getEDep(),
-								 eDepError,
-								 positionSW,
-								 directionSW,
-								 distanceToWire,
-								 clusterCount,
-								 clusterSize
-								 );
+        output_digi_hits.create( i.getCellID(),
+                                    type,
+                                    quality,
+                                    i.getTime(),
+                                    i.getEDep(),
+                                    eDepError,
+                                    positionSW,
+                                    directionSW,
+                                    distanceToWire,
+                                    clusterCount,
+                                    clusterSize
+                                    );
 	}// end loop over hit collection
 
 
@@ -170,9 +170,10 @@ StatusCode DCHdigi::finalize()
 {
     if( m_create_debug_histos.value() )
     {
-        std::unique_ptr<TFile> ofile{TFile::Open ( "dch_digi_alg_debug.root", "update" ) };
+        std::unique_ptr<TFile> ofile{TFile::Open ( "dch_digi_alg_debug.root", "recreate" ) };
         ofile->cd();
         hDpw->Write();
+        hDww->Write();
     }
 
     return StatusCode::SUCCESS;
