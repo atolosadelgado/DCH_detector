@@ -166,8 +166,8 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         auto directionSW  = Convert_TVector3_to_EDM4hepVector(wire_direction_ez         , 1./MM_TO_CM );
         float distanceToWire = distanceToWire_smeared/MM_TO_CM;
 
-        std::uint32_t clusterCount = 0;
-        std::uint32_t clusterSize = 0;
+        auto [clusterCount,clusterSize] = CalculateClusters(input_sim_hit);
+
 
         auto & i = input_sim_hit;
         output_digi_hits.create( i.getCellID(),
@@ -347,6 +347,7 @@ std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTracke
 {
 
     std::pair<uint32_t,uint32_t> return_values = {0,0};
+#if Walaa_code
     uint32_t & Ncl  = return_values.first;
     uint32_t & ClSz = return_values.second;
     //_________________SET NECESSARY PARAMETERS FOR THE CLS ALGORITHM-----WALAA_________________//
@@ -662,5 +663,6 @@ std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTracke
 		 * output_digi_hit.setClusterSize(NEltot);
 	}*/
 		// output_digi_hit.setClusterSize(NEltot);
+#endif
     return return_values;
 }
