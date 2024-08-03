@@ -151,8 +151,10 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         std::int32_t quality = 0;
         float eDepError =0;
         // length units back to mm
-        auto positionSW  = Convert_TVector3_to_EDM4hepVector(hit_projection_on_the_wire, 1./MM_TO_CM );
-        auto directionSW = Convert_TVector3_to_EDM4hepVector(wire_direction_ez,          1./MM_TO_CM );
+        auto positionSW   = Convert_TVector3_to_EDM4hepVector(hit_projection_on_the_wire, 1./MM_TO_CM );
+        auto positionSW_L = Convert_TVector3_to_EDM4hepVector(left_hit_position         , 1./MM_TO_CM );
+        auto positionSW_R = Convert_TVector3_to_EDM4hepVector(right_hit_position        , 1./MM_TO_CM );
+        auto directionSW  = Convert_TVector3_to_EDM4hepVector(wire_direction_ez         , 1./MM_TO_CM );
         float distanceToWire = distanceToWire_smeared/MM_TO_CM;
 
         std::uint32_t clusterCount = 0;
@@ -166,6 +168,8 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
             i.getEDep(),
             eDepError,
             positionSW,
+            positionSW_L,
+            positionSW_R,
             directionSW,
             distanceToWire,
             clusterCount,
