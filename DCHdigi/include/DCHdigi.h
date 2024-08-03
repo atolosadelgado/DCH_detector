@@ -97,20 +97,22 @@ private:
   //          machinery for smearing the position
 
   /// along the sense wire position resolution in mm
-  Gaudi::Property<float> m_z_resolution{this, "zResolution", 1.0,
+  Gaudi::Property<float> m_z_resolution{this, "zResolution", 10.0,
                                "Spatial resolution in the z direction (from reading out the wires at both sides) [mm]"};
   /// xy resolution in mm
-  Gaudi::Property<float> m_xy_resolution{this, "xyResolution", 0.1, "Spatial resolution in the xy direction [mm]"};
+  Gaudi::Property<float> m_xy_resolution{this, "xyResolution", 10., "Spatial resolution in the xy direction [mm]"};
 
   /// create seed using the uid
   SmartIF<IUniqueIDGenSvc>                   m_uidSvc;
   /// use thread local engine from C++ standard
   inline static thread_local std::mt19937_64 m_engine;
 
+
+  // Operator std::normal_distribution<T>::operator()(Generator& g) is a non-const member function and thus cannot be called for a constant object. So we defined the distribution as mutable.
   // Gaussian random number generator used for the smearing of the z position, in cm!
-  std::normal_distribution<double> m_gauss_z_cm;
+  mutable std::normal_distribution<double> m_gauss_z_cm;
   // Gaussian random number generator used for the smearing of the xy position, in cm!
-  std::normal_distribution<double> m_gauss_xy_cm;
+  mutable std::normal_distribution<double> m_gauss_xy_cm;
 
 
   //------------------------------------------------------------------
@@ -147,6 +149,13 @@ private:
 
   /// histogram to store distance from hit projection to the wire (should be zero)
   TH1D * hDww;
+
+  /// histogram to store smearing along the wire
+  TH1D * hSz;
+
+  /// histogram to store smearing perpendicular the wire
+  TH1D * hSxy;
+
 
 
 };

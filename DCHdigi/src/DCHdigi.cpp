@@ -12,18 +12,18 @@
 ///////////////////////////////////////////////////////////////////////////////////////
 // -- KeyValues("name of the variable that holds the name of the collection exposed in the python steering file", {"default name for the collection"}),
 DCHdigi::DCHdigi(const std::string& name, ISvcLocator* svcLoc)
-    : MultiTransformer(name, svcLoc,
-                        {
-                            KeyValues("DCH_simhits", {""}),
-                            KeyValues("HeaderName", {"EventHeader"}),
-                        },
-                        {
-                            KeyValues("DCH_DigiCollection", {"DCH_DigiCollection"})
-                        }
-                       )
+: MultiTransformer(name, svcLoc,
+    {
+        KeyValues("DCH_simhits", {""}),
+        KeyValues("HeaderName", {"EventHeader"}),
+    },
+    {
+        KeyValues("DCH_DigiCollection", {"DCH_DigiCollection"})
+    }
+  )
 {
-  m_geoSvc = serviceLocator()->service(m_geoSvcName);
-  m_uidSvc = serviceLocator()->service(m_uidSvcName);
+    m_geoSvc = serviceLocator()->service(m_geoSvcName);
+    m_uidSvc = serviceLocator()->service(m_uidSvcName);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -31,21 +31,21 @@ DCHdigi::DCHdigi(const std::string& name, ISvcLocator* svcLoc)
 ///////////////////////////////////////////////////////////////////////////////////////
 StatusCode DCHdigi::initialize() {
 
-	if (!m_uidSvc)
-		ThrowException( "Unable to get UniqueIDGenSvc" );
+    if (!m_uidSvc)
+    ThrowException( "Unable to get UniqueIDGenSvc" );
 
-	m_gauss_z_cm  = std::normal_distribution<double>(0., m_z_resolution.value()*MM_TO_CM );
-	m_gauss_xy_cm = std::normal_distribution<double>(0., m_xy_resolution.value()*MM_TO_CM);
+    m_gauss_z_cm  = std::normal_distribution<double>(0., m_z_resolution.value()*MM_TO_CM );
+    m_gauss_xy_cm = std::normal_distribution<double>(0., m_xy_resolution.value()*MM_TO_CM);
 
-	//-----------------
-	// Retrieve the subdetector
-	std::string DCH_name(m_DCH_name.value());
-	if ( 0 == m_geoSvc->getDetector()->detectors().count(DCH_name) )
-	{
-		ThrowException( "Detector <<" + DCH_name + ">> does not exist." );
-	}
+    //-----------------
+    // Retrieve the subdetector
+    std::string DCH_name(m_DCH_name.value());
+    if ( 0 == m_geoSvc->getDetector()->detectors().count(DCH_name) )
+    {
+        ThrowException( "Detector <<" + DCH_name + ">> does not exist." );
+    }
 
-	dd4hep::DetElement DCH_DE = m_geoSvc->getDetector()->detectors().at(DCH_name);
+    dd4hep::DetElement DCH_DE = m_geoSvc->getDetector()->detectors().at(DCH_name);
 
     ///////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////  retrieve data extension     //////////////////////////
@@ -54,30 +54,34 @@ StatusCode DCHdigi::initialize() {
 
     ///////////////////////////////////////////////////////////////////////////////////
 
-	//-----------------
-	// Retrieve the readout associated with the detector element (subdetector)
-	dd4hep::SensitiveDetector dch_sd = m_geoSvc->getDetector()->sensitiveDetector(DCH_name);
-	if(not dch_sd.isValid() )
-		ThrowException("No valid Sensitive Detector was found for detector <<" + DCH_name + ">>.");
+    //-----------------
+    // Retrieve the readout associated with the detector element (subdetector)
+    dd4hep::SensitiveDetector dch_sd = m_geoSvc->getDetector()->sensitiveDetector(DCH_name);
+    if(not dch_sd.isValid() )
+    ThrowException("No valid Sensitive Detector was found for detector <<" + DCH_name + ">>.");
 
-	dd4hep::Readout dch_readout = dch_sd.readout();
-	// set the cellID decoder
-	m_decoder = dch_readout.idSpec().decoder();
-	//-----------------
+    dd4hep::Readout dch_readout = dch_sd.readout();
+    // set the cellID decoder
+    m_decoder = dch_readout.idSpec().decoder();
+    //-----------------
 
 
-	std::stringstream ss;
-	PrintConfiguration(ss);
-	info() << ss.str().c_str() <<endmsg;
+    std::stringstream ss;
+    PrintConfiguration(ss);
+    info() << ss.str().c_str() <<endmsg;
     if( m_create_debug_histos.value() )
     {
         hDpw = new TH1D("hDpw", "Distance hit to the wire, in cm", 100,0,1);
         hDpw->SetDirectory(0);
         hDww = new TH1D("hDww", "Distance hit projection to the wire, in cm. Should be zero", 100,0,1);
         hDww->SetDirectory(0);
+        hSz  = new TH1D("hSz", "Smearing along the wire, in cm", 100,0,5*m_z_resolution.value());
+        hSz->SetDirectory(0);
+        hSxy = new TH1D("hSxy", "Smearing perpendicular the wire, in cm", 100,0,5*m_xy_resolution.value());
+        hSxy->SetDirectory(0);
     }
-	return StatusCode::SUCCESS;
-}
+    return StatusCode::SUCCESS;
+  }
 
 
 
@@ -86,48 +90,61 @@ StatusCode DCHdigi::initialize() {
 ///////////////////////////////////////////////////////////////////////////////////////
 std::tuple<colltype_out>
 DCHdigi::operator()(const colltype_in& input_sim_hits,
-                         const edm4hep::EventHeaderCollection&  headers) const {
+    const edm4hep::EventHeaderCollection&  headers) const {
+    // initialize seed for random engine
+    {
+        uint32_t evt_n = headers[0].getEventNumber();
+        uint32_t run_n = headers[0].getRunNumber();
+        size_t seed = m_uidSvc->getUniqueID(evt_n, run_n, this->name() );
+        m_engine.seed(seed);
+        // test random engine...
+        m_engine.discard(10);
+    }
+    debug() << "Input Sim Hit collection size: " << input_sim_hits.size() << endmsg;
 
-
-	{
-		// initialize seed for random engine
-		uint32_t evt_n = headers[0].getEventNumber();
-		uint32_t run_n = headers[0].getRunNumber();
-		size_t seed = m_uidSvc->getUniqueID(evt_n, run_n, this->name() );
-		m_engine.seed(seed);
-		// test random engine...
-		m_engine.discard(10);
-	}
-	debug() << "Input Sim Hit collection size: " << input_sim_hits.size() << endmsg;
-
-	// Create the collections we are going to return
-	colltype_out output_digi_hits;
+    // Create the collections we are going to return
+    colltype_out output_digi_hits;
 
     //loop over hit collection
-	for (const auto& input_sim_hit : input_sim_hits) {
-      dd4hep::DDSegmentation::CellID cellid = input_sim_hit.getCellID();
-      // std::cout << "New DCH hit with cell ID: " << cellid  << std::endl;
-      int ilayer = this->CalculateLayerFromCellID(cellid );
-      int nphi   = this->CalculateNphiFromCellID(cellid );
-      TVector3 hit_position { input_sim_hit.getPosition()[0]*MM_TO_CM ,
-                              input_sim_hit.getPosition()[1]*MM_TO_CM ,
-                              input_sim_hit.getPosition()[2]*MM_TO_CM };
+    for (const auto& input_sim_hit : input_sim_hits) {
+        dd4hep::DDSegmentation::CellID cellid = input_sim_hit.getCellID();
+        int ilayer = this->CalculateLayerFromCellID(cellid );
+        int nphi   = this->CalculateNphiFromCellID(cellid );
+        TVector3 hit_position { input_sim_hit.getPosition()[0]*MM_TO_CM ,
+                                input_sim_hit.getPosition()[1]*MM_TO_CM ,
+                                input_sim_hit.getPosition()[2]*MM_TO_CM };
 
-      // std::cout << hit_position.Mag() << std::endl;
 
-      TVector3 hit_to_wire_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
-      TVector3 hit_projection_on_the_wire = hit_position + hit_to_wire_vector;
+        // -------------------------------------------------------------------------
+        //      calculate hit position projection into the wire
+        TVector3 hit_to_wire_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_position);
+        TVector3 hit_projection_on_the_wire = hit_position + hit_to_wire_vector;
+        if( m_create_debug_histos.value() )
+        {
+            double distance_hit_wire = hit_to_wire_vector.Mag();
+            hDpw->Fill(distance_hit_wire);
+            // the distance from the hit projection and the wire should be zero
+            // TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
+            // hDww->Fill( dummy_vector.Mag() );
+        }
+        TVector3 wire_direction_ez = this->Calculate_wire_vector_ez(ilayer, nphi);
 
-      if( m_create_debug_histos.value() )
-      {
-          double distance_hit_wire = hit_to_wire_vector.Mag();
-          hDpw->Fill(distance_hit_wire);
-          // the distance from the hit projection and the wire should be zero
-          TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
-          hDww->Fill( dummy_vector.Mag() );
-      }
+        // -------------------------------------------------------------------------
+        //       smear the position
+        double smearing_z = m_gauss_z_cm( m_engine );
+        if( m_create_debug_histos.value() ) hSz->Fill( smearing_z );
 
-      TVector3 wire_direction_ez = this->Calculate_wire_vector_ez(ilayer, nphi);
+        hit_projection_on_the_wire +=  smearing_z*(wire_direction_ez.Unit());
+        if( m_create_debug_histos.value() )
+        {
+            // the distance from the hit projection and the wire should be zero
+            TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
+            hDww->Fill( dummy_vector.Mag() );
+        }
+
+        double smearing_xy = m_gauss_xy_cm( m_engine );
+        if( m_create_debug_histos.value() ) hSxy->Fill( smearing_xy );
+
 
         std::int32_t type = 0;
         std::int32_t quality = 0;
@@ -136,7 +153,7 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         edm4hep::Vector3d positionSW = {hit_projection_on_the_wire.x()/MM_TO_CM,
                                         hit_projection_on_the_wire.y()/MM_TO_CM,
                                         hit_projection_on_the_wire.z()/MM_TO_CM };
-        edm4hep::Vector3d directionSW = {wire_direction_ez.x()/MM_TO_CM,
+        edm4hep::Vector3d directionSW =  {  wire_direction_ez.x()/MM_TO_CM,
                                             wire_direction_ez.y()/MM_TO_CM,
                                             wire_direction_ez.z()/MM_TO_CM };
         float distanceToWire = hit_to_wire_vector.Mag();
@@ -145,22 +162,22 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 
         auto & i = input_sim_hit;
         output_digi_hits.create( i.getCellID(),
-                                    type,
-                                    quality,
-                                    i.getTime(),
-                                    i.getEDep(),
-                                    eDepError,
-                                    positionSW,
-                                    directionSW,
-                                    distanceToWire,
-                                    clusterCount,
-                                    clusterSize
-                                    );
-	}// end loop over hit collection
+            type,
+            quality,
+            i.getTime(),
+            i.getEDep(),
+            eDepError,
+            positionSW,
+            directionSW,
+            distanceToWire,
+            clusterCount,
+            clusterSize
+            );
+        }                                                       // end loop over hit collection
 
 
-	/////////////////////////////////////////////////////////////////
-	return std::make_tuple<colltype_out>(std::move(output_digi_hits));
+    /////////////////////////////////////////////////////////////////
+    return std::make_tuple<colltype_out>(std::move(output_digi_hits));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -174,6 +191,8 @@ StatusCode DCHdigi::finalize()
         ofile->cd();
         hDpw->Write();
         hDww->Write();
+        hSxy->Write();
+        hSz->Write();
     }
 
     return StatusCode::SUCCESS;
@@ -183,21 +202,21 @@ StatusCode DCHdigi::finalize()
 ///////////////////////       ThrowException       ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 void DCHdigi::ThrowException(std::string s) const {
-	error() << s.c_str()  << endmsg;
-	throw std::runtime_error(s);
-}
+    error() << s.c_str()  << endmsg;
+    throw std::runtime_error(s);
+  }
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////       PrintConfiguration       ////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 void DCHdigi::PrintConfiguration(std::ostream& io)
 {
-   io << "DCHdigi will use the following components:\n";
-   io << "\tGeometry Service: "                  << m_geoSvcName.value().c_str()           << "\n";
-   io << "\tDetector name: "                     << m_DCH_name.value().c_str()             << "\n";
-   io << "\t\t|--Volume bitfield: "              << m_decoder->fieldDescription().c_str()  << "\n";
-   io << "\t\t|--Number of layers: "             << dch_data->database.size()              << "\n";
-   return;
+    io << "DCHdigi will use the following components:\n";
+    io << "\tGeometry Service: "                  << m_geoSvcName.value().c_str()           << "\n";
+    io << "\tDetector name: "                     << m_DCH_name.value().c_str()             << "\n";
+    io << "\t\t|--Volume bitfield: "              << m_decoder->fieldDescription().c_str()  << "\n";
+    io << "\t\t|--Number of layers: "             << dch_data->database.size()              << "\n";
+    return;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -224,17 +243,17 @@ TVector3 DCHdigi::Calculate_wire_vector_ez(int ilayer, int nphi) const
     // double x1 = rz0; // m
     // double y1 = 0.; // m
     // double z1 = 0.; // m
-    double x1 = rz0; // m
-    double y1 = -stereosign*rz0*kappa*dch_data->Lhalf; // m
-    double z1 = -dch_data->Lhalf; // m
+    double x1 = rz0;                                        // m
+    double y1 = -stereosign*rz0*kappa*dch_data->Lhalf;      // m
+    double z1 = -dch_data->Lhalf;                           // m
 
     TVector3 p1 (x1,y1,z1);
 
 
     // point 2
-    double x2 = rz0; // m
-    double y2 = stereosign*rz0*kappa*dch_data->Lhalf; // m
-    double z2 = dch_data->Lhalf; // m
+    double x2 = rz0;                                        // m
+    double y2 = stereosign*rz0*kappa*dch_data->Lhalf;       // m
+    double z2 = dch_data->Lhalf;                            // m
 
     TVector3 p2 (x2,y2,z2);
 
