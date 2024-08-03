@@ -25,9 +25,9 @@
   * @param create_debug_histograms Optional flag to create debug histograms <br>
  * (default value false) <br>
   * @param GeoSvcName Geometry service name <br>
- * (default value GeoSvc) <br>c
+ * (default value GeoSvc) <br>
   * @param uidSvcName The name of the UniqueIDGenSvc instance <br>
- * (default value uidSvc) <br>c
+ * (default value uidSvc) <br>
  * <br>
  */
 

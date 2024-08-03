@@ -220,9 +220,13 @@ void DCHdigi::PrintConfiguration(std::ostream& io)
 {
     io << "DCHdigi will use the following components:\n";
     io << "\tGeometry Service: "                  << m_geoSvcName.value().c_str()           << "\n";
+    io << "\tUID Service: "                       << m_uidSvcName.value().c_str()           << "\n";
     io << "\tDetector name: "                     << m_DCH_name.value().c_str()             << "\n";
     io << "\t\t|--Volume bitfield: "              << m_decoder->fieldDescription().c_str()  << "\n";
     io << "\t\t|--Number of layers: "             << dch_data->database.size()              << "\n";
+    io << "\tCluster distributions taken from: "  << m_fileDataAlg.value().c_str()          << "\n";
+    io << "\tResolution along the wire (mm): "    << m_z_resolution.value()                 << "\n";
+    io << "\tResolution perp. to the wire (mm): " << m_xy_resolution.value()                << "\n";
     return;
 }
 

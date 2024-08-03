@@ -45,11 +45,18 @@ Build this project with `cmake`
 ```bash
 cmake -B build -S . -D CMAKE_INSTALL_PREFIX=install
 cmake --build build -- install
-export LD_LIBRARY_PATH=$PWD/install/lib:$LD_LIBRARY_PATH
+k4_local_repo
 ```
 
-## To run
+## To run simulation
 
 ```
 ddsim --steeringFile steering.py --outputFile 'dch_proton_10GeV.root' -N 10 --runType batch
+```
+
+## To run digitization
+
+```
+wget https://fccsw.web.cern.ch/fccsw/filesForSimDigiReco/IDEA/DataAlgFORGEANT.root
+k4run DCHdigi/test/runDCHdigi.py
 ```
