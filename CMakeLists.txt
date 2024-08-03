@@ -10,6 +10,8 @@
 #==========================================================================
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
+project(DCHv2)
+
 IF(NOT TARGET DD4hep::DDCore)
   find_package ( DD4hep REQUIRED )
   include ( ${DD4hep_DIR}/cmake/DD4hep.cmake )
