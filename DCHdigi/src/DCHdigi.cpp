@@ -1,8 +1,5 @@
 #include "DCHdigi.h"
 
-// ROOT
-#include "TVector3.h"
-
 // STL
 #include <iostream>
 #include <sstream>
@@ -168,23 +165,22 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 
         auto [clusterCount,clusterSize] = CalculateClusters(input_sim_hit);
 
-
-        auto & i = input_sim_hit;
-        output_digi_hits.create( i.getCellID(),
-            type,
-            quality,
-            i.getTime(),
-            i.getEDep(),
-            eDepError,
-            positionSW,
-            positionSW_L,
-            positionSW_R,
-            directionSW,
-            distanceToWire,
-            clusterCount,
-            clusterSize
-            );
-        }                                                       // end loop over hit collection
+        // create in place the output object
+        output_digi_hits.create(input_sim_hit.getCellID(),
+                                type,
+                                quality,
+                                input_sim_hit.getTime(),
+                                input_sim_hit.getEDep(),
+                                eDepError,
+                                positionSW,
+                                positionSW_L,
+                                positionSW_R,
+                                directionSW,
+                                distanceToWire,
+                                clusterCount,
+                                clusterSize
+                                );
+        }// end loop over hit collection
 
 
     /////////////////////////////////////////////////////////////////
