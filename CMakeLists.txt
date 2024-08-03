@@ -43,6 +43,5 @@ find_package(GSL)
 #-------------------
 if(Gaudi_FOUND)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
-  option(Walaa_code "compile cluster counting code developed by Walaa" ON)
   add_subdirectory(DCHdigi)
 endif()

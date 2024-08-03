@@ -345,9 +345,7 @@ TVector3 DCHdigi::Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TV
 ///////////////////////////////////////////////////////////////////////////////////////
 std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTrackerHit & input_sim_hit) const
 {
-
     std::pair<uint32_t,uint32_t> return_values = {0,0};
-#if Walaa_code
     uint32_t & Ncl  = return_values.first;
     uint32_t & ClSz = return_values.second;
     //_________________SET NECESSARY PARAMETERS FOR THE CLS ALGORITHM-----WALAA_________________//
@@ -663,6 +661,5 @@ std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTracke
 		 * output_digi_hit.setClusterSize(NEltot);
 	}*/
 		// output_digi_hit.setClusterSize(NEltot);
-#endif
     return return_values;
 }

@@ -20,6 +20,7 @@ from Configurables import DCHdigi
 DCHdigi = DCHdigi("DCHdigi")
 DCHdigi.DCH_simhits=["DCHCollection"]
 DCHdigi.DCH_name="DCH_v2"
+DCHdigi.fileDataAlg="DataAlgFORGEANT.root"
 
 DCHdigi.OutputLevel=INFO
 
