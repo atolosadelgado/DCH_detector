@@ -9,22 +9,40 @@
  * Processor requires a collection of SimTrackerHits <br>
  * This code uses DD4hep length natural unit (cm), but EDM4hep data is (usually) in mm. Please be careful with units.  <br>
  * <h4>Output</h4>
- * Processor produces collection of ParticleID<br>
+ * Processor produces collection of Digitized hits of Drift Chamber v2<br>
  * @param DCH_simhits The name of input collection, type edm4hep::SimTrackerHitCollection <br>
  * (default name empty) <br>
- * @param GeoSvcName Geometry service name <br>
- * (default value GeoSvc)
- * @param DCH_name ARC subdetector name <br>
+ * @param DCH_DigiCollection The name of out collection, type edm4hep::DriftChamberDigiV2Collection <br>
+ * (default name DCH_DigiCollection) <br>
+ * @param DCH_name DCH subdetector name <br>
  * (default value DCH_v2) <br>
+  * @param fileDataAlg File needed for calculating cluster count and size <br>
+ * (default value /eos/.../DataAlgFORGEANT.root) <br>
+  * @param zResolution_mm Resolution (sigma for gaussian smearing) along the sense wire, in mm <br>
+ * (default value 10 mm) <br>
+  * @param xyResolution_mm Resolution (sigma for gaussian smearing) perpendicular the sense wire, in mm <br>
+ * (default value 10 mm) <br>
+  * @param create_debug_histograms Optional flag to create debug histograms <br>
+ * (default value false) <br>
+  * @param GeoSvcName Geometry service name <br>
+ * (default value GeoSvc) <br>c
+  * @param uidSvcName The name of the UniqueIDGenSvc instance <br>
+ * (default value uidSvc) <br>c
  * <br>
  */
 
 #ifndef DCHDIGI_H
 #define DCHDIGI_H
 
+// Gaudi Transformer baseclass headers
 #include "Gaudi/Property.h"
 #include "GaudiAlg/Transformer.h"
-#include "GaudiKernel/RndmGenerators.h"
+#include "k4FWCore/Transformer.h"
+
+// Gaudi services
+#include "k4Interface/IGeoSvc.h"
+#include "k4Interface/IUniqueIDGenSvc.h"
+
 
 // EDM4HEP
 #include "edm4hep/SimTrackerHitCollection.h"
@@ -34,10 +52,6 @@
 // EDM4HEP extension
 #include "extension/DriftChamberDigiV2Collection.h"
 
-
-#include "k4FWCore/Transformer.h"
-#include "k4Interface/IGeoSvc.h"
-#include "k4Interface/IUniqueIDGenSvc.h"
 
 // DD4hep
 #include "DD4hep/Detector.h"  // for dd4hep::VolumeManager
@@ -104,10 +118,10 @@ private:
   //          machinery for smearing the position
 
   /// along the sense wire position resolution in mm
-  Gaudi::Property<float> m_z_resolution{this, "zResolution", 10.0,
+  Gaudi::Property<float> m_z_resolution{this, "zResolution_mm", 10.0,
                                "Spatial resolution in the z direction (from reading out the wires at both sides) [mm]"};
   /// xy resolution in mm
-  Gaudi::Property<float> m_xy_resolution{this, "xyResolution", 10., "Spatial resolution in the xy direction [mm]"};
+  Gaudi::Property<float> m_xy_resolution{this, "xyResolution_mm", 10., "Spatial resolution in the xy direction [mm]"};
 
   /// create seed using the uid
   SmartIF<IUniqueIDGenSvc>                   m_uidSvc;
@@ -159,17 +173,22 @@ private:
   double Calculate_phi_rot_equivalent_to_hit_to_wire_distance(int ilayer, double hit_to_wire_distance) const;
 
   //------------------------------------------------------------------
-  //        cluster calculation
+  //        cluster calculation, developed by Walaa
+
+  /// file with distributions to be sampled
+  Gaudi::Property<std::string> m_fileDataAlg{this, "fileDataAlg", "/eos/project/f/fccsw-web/www/filesForSimDigiReco/IDEA/DataAlgFORGEANT.root", "ROOT file with cluster size distributions"};
 
   /// pointer to wrapper class, which contains the cluster size and number distributions
-  Gaudi::Property<std::string> m_fileDataAlg{this, "fileDataAlg", "/eos/project/f/fccsw-web/www/filesForSimDigiReco/IDEA/DataAlgFORGEANT.root", "ROOT file with cluster size distributions"};
   AlgData * flData;
+
+  /// code developed by Walaa for calculating number of clusters and cluster size
   std::pair<uint32_t,uint32_t> CalculateClusters(const edm4hep::SimTrackerHit & input_sim_hit) const;
 
   //------------------------------------------------------------------
   //        debug information
+
   /// Flag to create output file with debug histgrams
-  Gaudi::Property<bool> m_create_debug_histos{this, "create_debug_histograms", true, "Create output file with histograms for debugging"};
+  Gaudi::Property<bool> m_create_debug_histos{this, "create_debug_histograms", false, "Create output file with histograms for debugging"};
 
   /// histogram to store distance from hit position to the wire
   TH1D * hDpw;
@@ -182,8 +201,6 @@ private:
 
   /// histogram to store smearing perpendicular the wire
   TH1D * hSxy;
-
-
 
 };
 
