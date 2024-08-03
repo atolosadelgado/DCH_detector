@@ -43,14 +43,20 @@
 #include "DD4hep/Detector.h"  // for dd4hep::VolumeManager
 #include "DDSegmentation/BitFieldCoder.h"
 
+// STL
 #include <string>
 #include <random>
 
+// data extension for the DCH v2
 #include "DDRec/DCH_info.h"
 
+// ROOT headers
 #include "TVector3.h"
 #include "TFile.h"
 #include "TH1D.h"
+
+// Class developed by Walaa for the CLS
+#include "AlgData.h"
 
 /// constant to convert from mm (EDM4hep) to DD4hep (cm)
 constexpr double MM_TO_CM = 0.1;
@@ -119,6 +125,8 @@ private:
   //------------------------------------------------------------------
   //        ancillary functions
 
+  bool IsFileGood(std::string & ifilename) const {return std::ifstream(ifilename).good(); }
+
   /// Print algorithm configuration
   void PrintConfiguration(std::ostream& io);
 
@@ -148,6 +156,15 @@ private:
   double   Calculate_wire_phi_z0          (int ilayer, int nphi) const;
 
   double Calculate_phi_rot_equivalent_to_hit_to_wire_distance(int ilayer, double hit_to_wire_distance) const;
+
+  //------------------------------------------------------------------
+  //        cluster calculation
+
+  /// pointer to wrapper class, which contains the cluster size and number distributions
+  Gaudi::Property<std::string> m_fileDataAlg{this, "fileDataAlg", "/eos/project/f/fccsw-web/www/filesForSimDigiReco/IDEA/DataAlgFORGEANT.root", "ROOT file with cluster size distributions"};
+  AlgData * flData;
+  std::pair<uint32_t,uint32_t> CalculateClusters(const edm4hep::SimTrackerHit & input_sim_hit) const;
+
   //------------------------------------------------------------------
   //        debug information
   /// Flag to create output file with debug histgrams
