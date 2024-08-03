@@ -120,6 +120,8 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
 
         // -------------------------------------------------------------------------
         //       smear the position
+
+        //       smear position along the wire
         double smearing_z = m_gauss_z_cm( m_engine );
         if( m_create_debug_histos.value() ) hSz->Fill( smearing_z );
 
@@ -131,6 +133,7 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
             hDww->Fill( dummy_vector.Mag() );
         }
 
+        //       smear position perpendicular to the wire
         double smearing_xy = m_gauss_xy_cm( m_engine );
         if( m_create_debug_histos.value() ) hSxy->Fill( smearing_xy );
 
@@ -141,7 +144,7 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         auto positionSW  = Convert_TVector3_to_EDM4hepVector(hit_projection_on_the_wire, 1./MM_TO_CM );
         auto directionSW = Convert_TVector3_to_EDM4hepVector(wire_direction_ez,          1./MM_TO_CM );
 
-        float distanceToWire = hit_to_wire_vector.Mag();
+        float distanceToWire = hit_to_wire_vector.Mag()/MM_TO_CM;
         std::uint32_t clusterCount = 0;
         std::uint32_t clusterSize = 0;
 
