@@ -107,7 +107,8 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
     colltype_out output_digi_hits;
 
     //loop over hit collection
-    for (const auto& input_sim_hit : input_sim_hits) {
+    for (const auto& input_sim_hit : input_sim_hits)
+    {
         dd4hep::DDSegmentation::CellID cellid = input_sim_hit.getCellID();
         int ilayer = this->CalculateLayerFromCellID(cellid );
         int nphi   = this->CalculateNphiFromCellID(cellid );
@@ -181,7 +182,6 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
                                 clusterSize
                                 );
         }// end loop over hit collection
-
 
     /////////////////////////////////////////////////////////////////
     return std::make_tuple<colltype_out>(std::move(output_digi_hits));
