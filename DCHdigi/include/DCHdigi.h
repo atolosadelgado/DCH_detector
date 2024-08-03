@@ -52,6 +52,7 @@
 
 // ROOT headers
 #include "TVector3.h"
+#include "TRandom3.h"
 #include "TFile.h"
 #include "TH1D.h"
 
@@ -121,7 +122,7 @@ private:
   // Gaussian random number generator used for the smearing of the xy position, in cm!
   mutable std::normal_distribution<double> m_gauss_xy_cm;
 
-
+  inline static thread_local TRandom3 myRandom;
   //------------------------------------------------------------------
   //        ancillary functions
 

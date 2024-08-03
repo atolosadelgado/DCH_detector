@@ -2,7 +2,6 @@
 
 // ROOT
 #include "TVector3.h"
-#include "TRandom3.h"
 
 // STL
 #include <iostream>
@@ -239,6 +238,7 @@ void DCHdigi::PrepareRandomEngine(const edm4hep::EventHeaderCollection&  headers
     m_engine.seed(seed);
     // test random engine...
     m_engine.discard(10);
+    myRandom.SetSeed(seed+42);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -539,7 +539,7 @@ std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTracke
 		}else{
 			ExSgmlen=ExSgmhad*TMath::Sqrt(LengthTrack);
 		}
-		maxExECl=(Eloss-maxEx0len+gRandom->Gaus(0,ExSgmlen))/maxExSlp;
+		maxExECl=(Eloss-maxEx0len+this->myRandom.Gaus(0,ExSgmlen))/maxExSlp;
 		//  cout<<"maxExECl=   "<<maxExECl<<endl;
 		//	SgmaxExECl=ExSgm/maxExSlp;
 		if(maxExECl<EIzs) {maxExECl=0.0;} //EIzs const = 25.6
@@ -578,7 +578,7 @@ std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTracke
 					float tmpCorr=0.0;
 					for(int i=0;i<nhEp;++i){
 						if(ExECl>=(i==0 ? 0 :hEpcut[i-1])&&ExECl<hEpcut[i]){
-							tmpCorr=gRandom->Gaus(CorrpMean[i],CorrpSgm[i]);
+							tmpCorr=this->myRandom.Gaus(CorrpMean[i],CorrpSgm[i]);
 						}
 					}
 					ClSz=TMath::Nint(ExECl*CorrSlp+CorrInt-tmpCorr);
@@ -628,14 +628,14 @@ std::pair<uint32_t,uint32_t> DCHdigi::CalculateClusters(const edm4hep::SimTracke
 			if(tmphE>=nhE) tmphE=nhE-1;
 			//			cout<<" tmphE "<<tmphE<<endl;
 			if(tmphE==nhE-1){
-				rndCorr=gRandom->Uniform(0,1);
+				rndCorr=this->myRandom.Uniform(0,1);
 				if(rndCorr<Corrdglfrac[tmphE]){
-					tmpCl=gRandom->Gaus(Corrdglmeang[tmphE],Corrdglsgmg[tmphE]);
+					tmpCl=this->myRandom.Gaus(Corrdglmeang[tmphE],Corrdglsgmg[tmphE]);
 				}else{
-					tmpCl=gRandom->Landau(Corrdglmpvl[tmphE],Corrdglsgml[tmphE]);
+					tmpCl=this->myRandom.Landau(Corrdglmpvl[tmphE],Corrdglsgml[tmphE]);
 				}
 			}else{
-				tmpCl=gRandom->Gaus(Corrdgmean[tmphE],Corrdgsgm[tmphE]);
+				tmpCl=this->myRandom.Gaus(Corrdgmean[tmphE],Corrdgsgm[tmphE]);
 			}
 
 			ClSz=TMath::Nint(vecExtraD[i]*CorrSlp+CorrInt-tmpCl);
