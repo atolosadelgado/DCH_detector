@@ -133,6 +133,13 @@ private:
     return m_decoder->get ( id,"nphi" );
   }
 
+  TVector3 Convert_EDM4hepVector_to_TVector3(const edm4hep::Vector3d & v, double scale) const {
+    return {v[0]*scale,v[1]*scale,v[2]*scale};
+  };
+  edm4hep::Vector3d Convert_TVector3_to_EDM4hepVector(const TVector3 & v, double scale) const{
+    return {v.x()*scale,v.y()*scale,v.z()*scale};
+  };
+
   // the following functions should be upstreamed to the data extension at DD4hep
   // to avoid code duplication and keep it centralized
   TVector3 Calculate_hitpos_to_wire_vector(int ilayer, int nphi, const TVector3 & hit_position /*in cm*/) const;

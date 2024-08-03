@@ -105,10 +105,7 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         dd4hep::DDSegmentation::CellID cellid = input_sim_hit.getCellID();
         int ilayer = this->CalculateLayerFromCellID(cellid );
         int nphi   = this->CalculateNphiFromCellID(cellid );
-        TVector3 hit_position { input_sim_hit.getPosition()[0]*MM_TO_CM ,
-                                input_sim_hit.getPosition()[1]*MM_TO_CM ,
-                                input_sim_hit.getPosition()[2]*MM_TO_CM };
-
+        auto hit_position =  Convert_EDM4hepVector_to_TVector3( input_sim_hit.getPosition(), MM_TO_CM );
 
         // -------------------------------------------------------------------------
         //      calculate hit position projection into the wire
@@ -118,9 +115,6 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         {
             double distance_hit_wire = hit_to_wire_vector.Mag();
             hDpw->Fill(distance_hit_wire);
-            // the distance from the hit projection and the wire should be zero
-            // TVector3 dummy_vector = this->Calculate_hitpos_to_wire_vector(ilayer, nphi,hit_projection_on_the_wire);
-            // hDww->Fill( dummy_vector.Mag() );
         }
         TVector3 wire_direction_ez = this->Calculate_wire_vector_ez(ilayer, nphi);
 
@@ -140,17 +134,13 @@ DCHdigi::operator()(const colltype_in& input_sim_hits,
         double smearing_xy = m_gauss_xy_cm( m_engine );
         if( m_create_debug_histos.value() ) hSxy->Fill( smearing_xy );
 
-
         std::int32_t type = 0;
         std::int32_t quality = 0;
         float eDepError =0;
         // length units back to mm
-        edm4hep::Vector3d positionSW = {hit_projection_on_the_wire.x()/MM_TO_CM,
-                                        hit_projection_on_the_wire.y()/MM_TO_CM,
-                                        hit_projection_on_the_wire.z()/MM_TO_CM };
-        edm4hep::Vector3d directionSW =  {  wire_direction_ez.x()/MM_TO_CM,
-                                            wire_direction_ez.y()/MM_TO_CM,
-                                            wire_direction_ez.z()/MM_TO_CM };
+        auto positionSW  = Convert_TVector3_to_EDM4hepVector(hit_projection_on_the_wire, 1./MM_TO_CM );
+        auto directionSW = Convert_TVector3_to_EDM4hepVector(wire_direction_ez,          1./MM_TO_CM );
+
         float distanceToWire = hit_to_wire_vector.Mag();
         std::uint32_t clusterCount = 0;
         std::uint32_t clusterSize = 0;
