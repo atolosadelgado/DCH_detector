@@ -106,6 +106,7 @@ private:
   SmartIF<IUniqueIDGenSvc>                   m_uidSvc;
   /// use thread local engine from C++ standard
   inline static thread_local std::mt19937_64 m_engine;
+  void PrepareRandomEngine(const edm4hep::EventHeaderCollection&  headers) const;
 
 
   // Operator std::normal_distribution<T>::operator()(Generator& g) is a non-const member function and thus cannot be called for a constant object. So we defined the distribution as mutable.

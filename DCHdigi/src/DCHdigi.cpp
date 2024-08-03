@@ -91,15 +91,10 @@ StatusCode DCHdigi::initialize() {
 std::tuple<colltype_out>
 DCHdigi::operator()(const colltype_in& input_sim_hits,
     const edm4hep::EventHeaderCollection&  headers) const {
+
     // initialize seed for random engine
-    {
-        uint32_t evt_n = headers[0].getEventNumber();
-        uint32_t run_n = headers[0].getRunNumber();
-        size_t seed = m_uidSvc->getUniqueID(evt_n, run_n, this->name() );
-        m_engine.seed(seed);
-        // test random engine...
-        m_engine.discard(10);
-    }
+    this->PrepareRandomEngine( headers );
+
     debug() << "Input Sim Hit collection size: " << input_sim_hits.size() << endmsg;
 
     // Create the collections we are going to return
@@ -217,6 +212,16 @@ void DCHdigi::PrintConfiguration(std::ostream& io)
     io << "\t\t|--Volume bitfield: "              << m_decoder->fieldDescription().c_str()  << "\n";
     io << "\t\t|--Number of layers: "             << dch_data->database.size()              << "\n";
     return;
+}
+
+void DCHdigi::PrepareRandomEngine(const edm4hep::EventHeaderCollection&  headers) const
+{
+    uint32_t evt_n = headers[0].getEventNumber();
+    uint32_t run_n = headers[0].getRunNumber();
+    size_t seed = m_uidSvc->getUniqueID(evt_n, run_n, this->name() );
+    m_engine.seed(seed);
+    // test random engine...
+    m_engine.discard(10);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////
