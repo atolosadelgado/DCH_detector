@@ -234,6 +234,7 @@ static dd4hep::Ref_t create_DCH_o1_v02(dd4hep::Detector &desc, dd4hep::xml::Hand
     for(const auto& [ilayer, l]  : DCH_i->database )
     {
 
+if(ilayer>15) continue;
         // // // // // // // // // // // // // // // // // // // // /
         // // // // // INITIALIZATION OF THE LAYER // // // // // //
         // // // // // // // // // // // // // // // // // // // //
@@ -254,7 +255,8 @@ static dd4hep::Ref_t create_DCH_o1_v02(dd4hep::Detector &desc, dd4hep::xml::Hand
 
         std::string layer_name = detName+"_layer"+std::to_string(ilayer);
         dd4hep::Volume layer_v ( layer_name , layer_s, gasvolMat );
-        layer_v.setVisAttributes( desc.visAttributes( Form("dch_layer_vis%d", ilayer%22) ) );
+        //layer_v.setVisAttributes( desc.visAttributes( Form("dch_layer_vis%d", ilayer%22) ) );
+        layer_v.setVisAttributes( desc.visAttributes( "dch_no_vis" ) );
         auto layer_pv = gas_v.placeVolume(layer_v);
         // ilayer is a counter that runs from 1 to 112 (nsuperlayers * nlayersPerSuperlayer)
         // it seems more convenient to store the layer number within the superlayer
@@ -311,7 +313,9 @@ static dd4hep::Ref_t create_DCH_o1_v02(dd4hep::Detector &desc, dd4hep::xml::Hand
             {
                 dd4hep::Tube swire_s(0., dch_SWire_thickness, swlength);
                 dd4hep::Volume swire_v(cell_name+"_swire", swire_s, dch_SWire_material);
-                swire_v.setVisAttributes( wiresVis );
+                auto kkstr = Form("dch_layer_vis%d", ilayer%22);
+                std::cout << "gsdfs " << kkstr << std::endl;
+                swire_v.setVisAttributes( desc.visAttributes( kkstr ) );
                 // Change sign of stereo angle to place properly the wire inside the twisted tube
                 dd4hep::RotationX stereoTr( (-1.)*l.StereoSign()*DCH_i->stereoangle_z0(cell_rave_z0) );
                 dd4hep::Transform3D swireTr ( stereoTr * dd4hep::Translation3D(cell_rave_z0,0.,0.) );
@@ -479,7 +483,7 @@ static dd4hep::Ref_t create_DCH_o1_v02(dd4hep::Detector &desc, dd4hep::xml::Hand
         }/// end building wires
         int maxphi = ncells;
         if(debugGeometry)
-            maxphi=3;
+            maxphi=ncells/6;//std::min(50,ncells);
         for(int nphi = 0; nphi < maxphi; ++nphi)
         {
             // TODO: check if staggering is just + 0.25*cell_phi_width*(ilayer%2);
