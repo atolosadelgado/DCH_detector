@@ -12,6 +12,8 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(DCHv2)
 
+find_package( Geant4 REQUIRED )
+
 IF(NOT TARGET DD4hep::DDCore)
   find_package ( DD4hep REQUIRED )
   include ( ${DD4hep_DIR}/cmake/DD4hep.cmake )
@@ -24,6 +26,11 @@ dd4hep_configure_output()
 
 dd4hep_add_plugin(DCH SOURCES src/DriftChamber_o1_v02.cpp src/DriftChamber_o1_v03.cpp
   USES DD4hep::DDCore DD4hep::DDRec DD4hep::DDCond ROOT::Core ROOT::Geom ROOT::GenVector ROOT::MathCore)
+install(TARGETS DCH LIBRARY DESTINATION lib)
+
+
+dd4hep_add_plugin(DCHG4 SOURCES src/SmartlessLogicalVolume.cpp
+  USES DD4hep::DDCore DD4hep::DDRec DD4hep::DDCond ROOT::Core ROOT::Geom ROOT::GenVector ROOT::MathCore DD4hep::DDG4 ${Geant4_LIBRARIES})
 install(TARGETS DCH LIBRARY DESTINATION lib)
 
 # Gaudi Algorithm for DCHdigi

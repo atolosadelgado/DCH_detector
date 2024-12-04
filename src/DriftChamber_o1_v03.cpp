@@ -249,6 +249,8 @@ static dd4hep::Ref_t create_DCH_o1_v03(dd4hep::Detector &desc, dd4hep::xml::Hand
         dd4hep::Hyperboloid layer_s(rin, stin, rout, stout, dz);
         std::string layer_name = detName+"_layer"+std::to_string(ilayer);
         dd4hep::Volume layer_v ( layer_name , layer_s, gasvolMat );
+        layer_v.addProperty("Geant4-plugin", "SmartlessLogicalVolume");
+        layer_v.addProperty("SetSmartless", "0");
         // layer_v.setVisAttributes( desc.visAttributes( Form("dch_layer_vis%d", ilayer%22) ) );
         layer_v.setVisAttributes( desc.visAttributes( "dch_layer_vis" ) );
         gas_v.placeVolume(layer_v);
