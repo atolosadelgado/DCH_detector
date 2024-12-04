@@ -22,7 +22,7 @@ ENDIF()
 
 dd4hep_configure_output()
 
-dd4hep_add_plugin(DCH SOURCES src/DriftChamber_o1_v02.cpp
+dd4hep_add_plugin(DCH SOURCES src/DriftChamber_o1_v02.cpp src/DriftChamber_o1_v03.cpp
   USES DD4hep::DDCore DD4hep::DDRec DD4hep::DDCond ROOT::Core ROOT::Geom ROOT::GenVector ROOT::MathCore)
 install(TARGETS DCH LIBRARY DESTINATION lib)
 

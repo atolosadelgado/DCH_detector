@@ -2,6 +2,8 @@
 # of the B1 example when running in interactive mode
 #
 
+/run/verbose 2
+
 # Use these open statements to open selected visualization
 #
 # Use this open statement to create an OpenGL view:
@@ -33,7 +35,7 @@
 /vis/verbose errors
 #
 # Draw geometry:
-/vis/drawVolume ! ! 2
+/vis/drawVolume ! ! 1
 #
 # Specify view angle:
 /vis/viewer/set/viewpointVector -1 0 0
