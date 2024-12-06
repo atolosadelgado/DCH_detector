@@ -113,7 +113,6 @@
       limits="DCH_limits"
       buildLayers="True"
       printExcelTable="False"
-      placeHyperboloidalLayers="False"
       >
     <!-- Dummy tag to build only few sectors in order to check for overlaps in less than 1 min -->
 <!--     <debugGeometry/> -->
@@ -136,7 +135,7 @@
     </gas>
     <!-- /detectors/detector/wires -->
     <wires
-        vis="dch_aerogel_vis"
+        vis="BLUE"
         buildSenseWires="True"
         buildFieldWires="True"
         SWire_thickness       ="20*DCH_SWire_thickness"
@@ -188,6 +187,9 @@
     <vis name="dch_layer_vis19" r="055/256" g="128/256" b="128/256" alpha="1.0"  showDaughters="true" visible="true" />
     <vis name="dch_layer_vis20" r="055/256" g="128/256" b="128/256" alpha="1.0"  showDaughters="true" visible="true" />
     <vis name="dch_layer_vis21" r="055/256" g="128/256" b="128/256" alpha="1.0"  showDaughters="true" visible="true" />
+    <vis name="RED"   r="1" g="0" b="0" alpha="1.0"  showDaughters="true" visible="true" />
+    <vis name="GREEN" r="0" g="1" b="0" alpha="1.0"  showDaughters="true" visible="true" />
+    <vis name="BLUE"  r="0" g="0" b="1" alpha="1.0"  showDaughters="true" visible="true" />
     <vis name="dch_no_vis_nodaughters" showDaughters="true" visible="true" />
     <vis name="dch_no_vis" showDaughters="true" visible="false" />
     <vis name="dch_envelope_vis"  r="0/256"   g="96/256"  b="156/256" alpha="0.3"  showDaughters="true" visible="false" />
