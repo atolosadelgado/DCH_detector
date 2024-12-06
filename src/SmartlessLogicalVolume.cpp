@@ -53,9 +53,8 @@ namespace dd4hep   {
     if( default_prop != volume_prop)
     {
       // try conversion from string to integer
-      auto s = volume_prop;
       int Smartless;
-      bool IsConversionDone = std::from_chars(s.data(), s.data() + s.size(), Smartless).ec == std::errc{} ;
+      bool IsConversionDone = std::from_chars(volume_prop.data(), volume_prop.data() + volume_prop.size(), Smartless).ec == std::errc{} ;
       if ( IsConversionDone )
       {
         ptr->SetSmartless(Smartless);
