@@ -227,7 +227,7 @@ static dd4hep::Ref_t create_DCH_o1_v03(dd4hep::Detector &desc, dd4hep::xml::Hand
         for(const auto& [ilayer, l]  : DCH_i->database )
         {
 
-            if( ilayer!=1) continue;
+            // if( ilayer!=1) continue;
 
             // // // // // // // // // // // // // // // // // // // // /
             // // // // // INITIALIZATION OF THE LAYER // // // // // //
